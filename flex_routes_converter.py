@@ -72,7 +72,7 @@ def flex_create_calender(DATE_OF_LOAD):
     df_calender['WEEK_1234_ORDER'] = 1
     df_calender['WEEK_1234_ORDER'] = df_calender['WEEK_1234_ORDER'].astype('int')
     df_calender.replace({'DAY_NAME' : { 1 : 'ПН', 2 : 'ВТ', 3 : 'СР', 4 : 'ЧТ', 5 : 'ПТ', 6 : 'СБ', 7 : 'ВС'}}, inplace=True)
-    DATE_OF_END = pd.to_datetime(DATE_OF_LOAD) +  + timedelta(days=60)
+    DATE_OF_END = pd.to_datetime(DATE_OF_LOAD, format='%d.%m.%Y') +  + timedelta(days=60)
     filt = (df_calender['DATE'] >= pd.to_datetime(DATE_OF_LOAD)) & (df_calender['DATE'] <= DATE_OF_END)
     df_calender = df_calender[filt]
     return df_calender 
@@ -98,6 +98,19 @@ def flex_converting_rtm_to_routes(df_rtm_flex, df_calender):
     return df_routes_flex
 
 
+def add_empty_shipto(df_routes_flex, DATE_OF_LOAD):
+    #Danone|TestTerritory_3_Dub33|Dub33|Мерчандайзер||2023-05-08|7|1|130||||
+    df_routes_in_case = df_routes_flex.groupby(by=['AGENCY_NAME', 'ROUTE_NAME', 'EXT_ROUTE_ID']).agg('size').reset_index().drop(columns=0)
+    df_routes_in_case['FIRST_VISIT_DATE'] = pd.to_datetime(DATE_OF_LOAD, format='%d.%m.%Y')
+    df_routes_in_case['REPEAT_DAYS']    = '7'
+    df_routes_in_case['VISIT_NUMBER']   = '1'
+    df_routes_in_case['VISIT_DURATION'] = '130' 
+    df_routes_in_case['ROUTE_TYPE'] = 'Мерчандайзер' 
+    df_routes_in_case['SHIP_TO'] = ''
+    df_routes_in_case[['WEEKDAY_NUMBER', 'DAY_NAME', 'WEEK_NUMBER', 'WEEK_1234_ORDER', 'PHOTOS_TARGET', 'DOCUMENTS_TARGET', 'PHOTOAUDIT_TARGET', 'END_DATE']] = ''
+    df_routes_in_case = df_routes_in_case[['SHIP_TO', 'ROUTE_NAME', 'FIRST_VISIT_DATE', 'WEEKDAY_NUMBER', 'DAY_NAME', 'WEEK_NUMBER', 'WEEK_1234_ORDER', 'EXT_ROUTE_ID',  'VISIT_NUMBER', 'AGENCY_NAME', 'VISIT_DURATION', 'ROUTE_TYPE',  'PHOTOS_TARGET', 'DOCUMENTS_TARGET', 'PHOTOAUDIT_TARGET', 'END_DATE',  'REPEAT_DAYS']]
+    df_routes_flex = pd.concat([df_routes_in_case, df_routes_flex])
+    return df_routes_flex
 
 #df_rtm_keys = df_rtm_flex.pivot_table(index= ['SHIP_TO', 'ROUTE_NAME']).reset_index()
 
