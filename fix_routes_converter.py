@@ -40,6 +40,7 @@ def fix_rename_columns(df_rtm):
     df_rtm = df_rtm[filt]
     filt = df_rtm['ORDER_TYPE'] == 'FIX'  #FLEX     
     df_rtm = df_rtm[filt]
+    df_rtm['SHIP_TO'] = df_rtm['SHIP_TO'].astype('float').astype('int').astype('str')
     return df_rtm
 
 
@@ -60,6 +61,7 @@ def fix_unpivot_rtm(df_rtm):
     df_rtm = df_rtm[filt]
     df_rtm['ROW_NUMBER'] = df_rtm.groupby(by=['ROUTE_NAME','DAY_NAME','WEEK_1234_ORDER' ]).cumcount()+1
     df_rtm.loc[df_rtm['VISIT_NUMBER'] == 1, ['VISIT_NUMBER']] = df_rtm['ROW_NUMBER']
+    df_rtm['SHIP_TO'] = df_rtm['SHIP_TO'].astype('float').astype('int').astype('str')
     return df_rtm
 
 
@@ -97,6 +99,7 @@ def fix_converting_rtm_to_routes(df_rtm, df_calender):
     df_routes['PHOTOAUDIT_TARGET']= '1'   # - Задай им 1 или 0, Система будет их требовать, нужна какая-нибудь циферка, если хотим совсем невалидное можно -1 указать, допустимо любое число.
     df_routes['END_DATE']  = ''
     df_routes['REPEAT_DAYS']  = '28' 
+    df_routes['SHIP_TO'] = df_routes['SHIP_TO'].astype('float').astype('int').astype('str')
     return df_routes
 
 

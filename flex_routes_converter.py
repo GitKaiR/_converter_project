@@ -15,7 +15,7 @@ pd.options.mode.chained_assignment = None
 
 
 def flex_import_rtm_file(PATH):
-    df_rtm = pd.read_excel(PATH, sheet_name='MergeDATA', usecols='A:R')#, engine = 'pyxlsb')
+    df_rtm = pd.read_excel(PATH, sheet_name='MergeDATA', usecols='A:R',  dtype='str')#, engine = 'pyxlsb')
     return df_rtm
 
 def flex_rename_columns(df_rtm):
@@ -28,8 +28,9 @@ def flex_rename_columns(df_rtm):
                'Weekly Frequency'              :  'FREQUENCY_RTM',
                'РОЛЬ'                          :  'ROLE',
                'Форма заказа'                  :  'ORDER_TYPE',
-               'СЦЕНАРИЙ'                      :  'SCENARIO'}
+               'СЦЕНАРИЙ'                      :  'SCENARIO'}    
     df_rtm.rename(columns=renames, inplace=True)
+    df_rtm['SHIP_TO'] = df_rtm['SHIP_TO'].astype('float').astype('int').astype('str')
     return df_rtm
     
 def flex_filters_data(df_rtm, agency_name):    
@@ -62,6 +63,7 @@ def flex_unpivot_rtm(df_rtm):
     df_rtm_flex['EXT_ROUTE_ID'] = df_rtm_flex['ROUTE_NAME'].str.split('_').str[-1].str.strip()
     df_rtm_flex['ROW_NUMBER'] = df_rtm_flex.groupby(by=['ROUTE_NAME','DAY_NAME','WEEK_1234_ORDER' ]).cumcount()+1
     df_rtm_flex.loc[df_rtm_flex['VISIT_NUMBER'] == 1, ['VISIT_NUMBER']] = df_rtm_flex['ROW_NUMBER']
+    df_rtm_flex['SHIP_TO'] = df_rtm_flex['SHIP_TO'].astype('float').astype('int').astype('str')
     return df_rtm_flex
 
 def flex_create_calender(DATE_OF_LOAD):
@@ -83,6 +85,7 @@ def flex_converting_rtm_to_routes(df_rtm_flex, df_calender):
     df_rtm_keys = df_rtm_keys[['SHIP_TO', 'ROUTE_NAME']]
     df_routes_flex = pd.merge(df_rtm_keys, df_calender, how='cross' )
     df_routes_flex = pd.merge(df_routes_flex, df_rtm_flex[['SHIP_TO', 'ROUTE_NAME', 'EXT_ROUTE_ID', 'DAY_NAME', 'VISIT_NUMBER', 'AGENCY_NAME', 'VISIT_DURATION', 'ROUTE_TYPE']], how='left',  on=['SHIP_TO', 'ROUTE_NAME', 'DAY_NAME'])
+    
     df_routes_flex.dropna(subset=['VISIT_NUMBER'], inplace=True)
     df_routes_flex.rename(columns={'DATE': 'FIRST_VISIT_DATE'}, inplace=True)
     df_routes_flex.loc[ df_routes_flex['VISIT_DURATION'] < 5, ['VISIT_DURATION']]=5
@@ -95,6 +98,7 @@ def flex_converting_rtm_to_routes(df_rtm_flex, df_calender):
     df_routes_flex['PHOTOAUDIT_TARGET']= '1'   # - Задай им 1 или 0, Система будет их требовать, нужна какая-нибудь циферка, если хотим совсем невалидное можно -1 указать, допустимо любое число.
     df_routes_flex['END_DATE']  = ''
     df_routes_flex['REPEAT_DAYS']  = '0' #Гибкие маршруты теперь заливаем так же как и фиксированные, просто вместо цикличности указывать 0 (без цикла). 
+    df_routes_flex['SHIP_TO'] = df_routes_flex['SHIP_TO'].astype('float').astype('int').astype('str')
     return df_routes_flex
 
 
@@ -102,6 +106,7 @@ def add_empty_shipto(df_routes_flex, DATE_OF_LOAD):
     #Danone|TestTerritory_3_Dub33|Dub33|Мерчандайзер||2023-05-08|7|1|130||||
     df_routes_in_case = df_routes_flex.groupby(by=['AGENCY_NAME', 'ROUTE_NAME', 'EXT_ROUTE_ID']).agg('size').reset_index().drop(columns=0)
     df_routes_in_case['FIRST_VISIT_DATE'] = pd.to_datetime(DATE_OF_LOAD, format='%d.%m.%Y')
+    df_routes_in_case['FIRST_VISIT_DATE'] = df_routes_in_case['FIRST_VISIT_DATE'].astype('str')
     df_routes_in_case['REPEAT_DAYS']    = '7'
     df_routes_in_case['VISIT_NUMBER']   = '1'
     df_routes_in_case['VISIT_DURATION'] = '130' 

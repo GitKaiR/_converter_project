@@ -67,7 +67,7 @@ def export_setmobfaceadd(df_routes, path, folder, agency=''):
     df_routes_export = df_routes_export[filt]
     df_routes_export = pd.DataFrame(df_routes_export.groupby(by=[ 'SHIP_TO', 'EMPLOYEE_AND_VACANTS']).agg('size')).reset_index()
     df_routes_export[1] = df_routes_export['EMPLOYEE_AND_VACANTS']
-    df_routes_export[2] = df_routes_export['SHIP_TO']
+    #df_routes_export[2] = df_routes_export['SHIP_TO'].astype('float').astype('int').astype('str')
     df_routes_export = df_routes_export[[1,2]]
     if agency != '':     agency = "\\" + str(agency)
     export_path = os.path.dirname(path) +  "\\" + str(folder) + agency + "\DMT_Set_MobFaces_Add.txt"
@@ -148,7 +148,7 @@ def export_setroutepointsbatch(df_routes, path, folder, agency=''):
     df_routes_export[1] = df_routes_export['ROUTE_NAME']   + "_DATE_" +  df_routes_export['DATE']
     df_routes_export[[2,3,5,9,10,11,12,13,14,15,16,18]] = np.NaN
     df_routes_export[4] = df_routes_export['VISIT_SEQUENCE']
-    df_routes_export[6] = df_routes_export['SHIP_TO']
+    #df_routes_export[6] = df_routes_export['SHIP_TO'].astype('float').astype('int').astype('str')
     df_routes_export[[7,8]] = np.NaN
     df_routes_export[17] = '1'
     df_routes_export = df_routes_export[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]]
@@ -170,6 +170,7 @@ def fix_export_route_file(df_routes, path):
                 'VISIT_NUMBER'       : 'SortID',        #-- порядок точки в дне на маршруте
                 'VISIT_DURATION'     : 'Duration'}      #-- длительность посещения в минутах
     df_routes_export = df_routes[['AGENCY_NAME','ROUTE_NAME','ROUTE_TYPE','SHIP_TO','FIRST_VISIT_DATE','REPEAT_DAYS','VISIT_NUMBER','VISIT_DURATION']].rename(columns=renames)  
+    #df_routes_export['SHIP_TO'] = df_routes_export['SHIP_TO'].astype('float').astype('int').astype('str')
     export_path = os.path.dirname(path) + "\ROUTES_Data" + ".txt"
     df_routes_export.to_csv(export_path, sep='|', index=False, encoding='utf-8')
     print('')
@@ -193,6 +194,7 @@ def export_setclientservice(df_routes, path, folder, agency=''):
                 'PHOTOAUDIT_TARGET'  : 'PlanAuditCountPerVisit',    # 12--- Плановое количество фотоаудитов на один визит
                 'END_DATE'           : 'EndDate'}                   # 13--- Дата окончания цикла планового посещения
     df_routes_export = df_routes[['AGENCY_NAME','ROUTE_NAME','EXT_ROUTE_ID','ROUTE_TYPE','SHIP_TO','FIRST_VISIT_DATE','REPEAT_DAYS','VISIT_NUMBER','VISIT_DURATION', 'PHOTOS_TARGET','DOCUMENTS_TARGET','PHOTOAUDIT_TARGET', 'END_DATE']].rename(columns=renames)  
+    #df_routes_export['SHIP_TO'] = df_routes_export['SHIP_TO'].astype('float').astype('int').astype('str')
     if agency != '':     agency = "\\" + str(agency)
     export_path = os.path.dirname(path) +  "\\" + str(folder) + agency + "\DMT_User273_SetClientServiceMatrix_Batch.txt"
     df_routes_export.to_csv(export_path, sep='|', index=False, encoding='utf-8', header=False)

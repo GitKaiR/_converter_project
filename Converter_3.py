@@ -5,6 +5,7 @@ pd.options.mode.chained_assignment = None
 from interface import * 
 from fix_routes_converter  import *
 from flex_routes_converter import *
+from tl_routes_converter import *
 from routes_export import *
 from time import sleep
 
@@ -43,6 +44,22 @@ def flex_rtm_convertor():
             #show_routs_wo_employee(df_employees) 
             export_new_routes_files(df_routes_flex, PATH, 'Гибкие_маршруты',df_employees, agency_name)        
         DATE_OF_LOAD, PATH = '',''
+
+
+def tl_rtm_convertor():
+    print_warning_teamlead()
+    PATH = input_path()
+    if PATH != 'error':
+        DATE_OF_LOAD = input_load_date()        
+        df_rtm = tl_import_rtm_file(PATH)     
+        df_rtm = tl_rename_columns(df_rtm)   
+        for agency_name in set_agency_list(df_rtm):
+            print_processed_agency(agency_name)            
+            df_rtm_tmp =  tl_filters_data(df_rtm, agency_name)
+            df_routes_tmp = tl_converting_rtm_to_routes(df_rtm_tmp)
+            df_routes_tmp = tl_add_empty_shipto(df_routes_tmp, DATE_OF_LOAD)
+            export_new_routes_files(df_routes_tmp, PATH, 'Маршруты тимлидов', df_employees='', agency=agency_name)        
+        DATE_OF_LOAD, PATH = '',''        
         
 def employee_convertor():
     PATH = input_path()
@@ -68,6 +85,8 @@ elif convertor == '3':
     employee_convertor() 
 elif convertor == '4':
     delete_routes_convertor()
+elif convertor == '5':
+    tl_rtm_convertor()
 else:
     print ("Error")
 
