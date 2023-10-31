@@ -29,7 +29,8 @@ from interface import show_new_routes
 def import_emploee_data(PATH):
     df_employees = pd.read_excel(PATH, sheet_name='Сотрудники', usecols='A:D', skiprows=5, dtype='str')#, engine = 'pyxlsb')
     df_employees.rename(columns={'Маршрут': 'ROUTE_NAME', 'Внешний код': 'EMPLOYEE_ID', 'ФИО': 'EMPLOYEE_NAME', 'Код': 'EMPLOYEE_INNER_ID'}, inplace=True)
-    return df_employees
+    df_employees = df_employees.replace(r'\n','', regex=True)
+    return df_employees 
 
 
 def convert_emploee_data(df_employees, df_rtm):    

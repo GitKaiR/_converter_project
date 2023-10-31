@@ -9,6 +9,7 @@ pd.options.mode.chained_assignment = None
 
 def tl_import_rtm_file(PATH):
     df_rtm = pd.read_excel(PATH, sheet_name='MergeDATA', usecols='A:R',  dtype='str')#, engine = 'pyxlsb')
+    df_rtm = df_rtm.replace(r'\n','', regex=True)
     return df_rtm
 
 
@@ -25,6 +26,7 @@ def tl_rename_columns(df_rtm):
                'СЦЕНАРИЙ'                      :  'SCENARIO'}    
     df_rtm.rename(columns=renames, inplace=True)
     df_rtm['SHIP_TO'] = df_rtm['SHIP_TO'].astype('float').astype('int').astype('str')
+    df_rtm['VISIT_DURATION'] = df_rtm['VISIT_DURATION'].astype('float').astype('int') 
     return df_rtm
     
 
@@ -71,4 +73,5 @@ def tl_add_empty_shipto(df_routes, DATE_OF_LOAD):
     df_routes_in_case[['PHOTOS_TARGET', 'DOCUMENTS_TARGET', 'PHOTOAUDIT_TARGET', 'END_DATE']] = ''
     df_routes_in_case = df_routes_in_case[['AGENCY_NAME','ROUTE_NAME','EXT_ROUTE_ID','ROUTE_TYPE','SHIP_TO','FIRST_VISIT_DATE','REPEAT_DAYS','VISIT_NUMBER','VISIT_DURATION', 'PHOTOS_TARGET','DOCUMENTS_TARGET','PHOTOAUDIT_TARGET', 'END_DATE']]
     df_routes = pd.concat([df_routes_in_case, df_routes])
+    df_routes_in_case['FIRST_VISIT_DATE'] = df_routes_in_case['FIRST_VISIT_DATE'].astype('str')
     return df_routes

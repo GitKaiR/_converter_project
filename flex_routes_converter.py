@@ -16,6 +16,7 @@ pd.options.mode.chained_assignment = None
 
 def flex_import_rtm_file(PATH):
     df_rtm = pd.read_excel(PATH, sheet_name='MergeDATA', usecols='A:R',  dtype='str')#, engine = 'pyxlsb')
+    df_rtm = df_rtm.replace(r'\n','', regex=True)
     return df_rtm
 
 def flex_rename_columns(df_rtm):
@@ -31,6 +32,7 @@ def flex_rename_columns(df_rtm):
                'СЦЕНАРИЙ'                      :  'SCENARIO'}    
     df_rtm.rename(columns=renames, inplace=True)
     df_rtm['SHIP_TO'] = df_rtm['SHIP_TO'].astype('float').astype('int').astype('str')
+    df_rtm['VISIT_DURATION'] = df_rtm['VISIT_DURATION'].astype('float').astype('int') 
     return df_rtm
     
 def flex_filters_data(df_rtm, agency_name):    
@@ -88,6 +90,7 @@ def flex_converting_rtm_to_routes(df_rtm_flex, df_calender):
     
     df_routes_flex.dropna(subset=['VISIT_NUMBER'], inplace=True)
     df_routes_flex.rename(columns={'DATE': 'FIRST_VISIT_DATE'}, inplace=True)
+    df_routes_flex['VISIT_DURATION'] = df_routes_flex['VISIT_DURATION'].astype('float').astype('int') 
     df_routes_flex.loc[ df_routes_flex['VISIT_DURATION'] < 5, ['VISIT_DURATION']]=5
     df_routes_flex['VISIT_DURATION'] = df_routes_flex['VISIT_DURATION'].astype('int').astype('str')   
     df_routes_flex['VISIT_NUMBER'] = df_routes_flex['VISIT_NUMBER'].astype('int').astype('str')
@@ -106,7 +109,6 @@ def add_empty_shipto(df_routes_flex, DATE_OF_LOAD):
     #Danone|TestTerritory_3_Dub33|Dub33|Мерчандайзер||2023-05-08|7|1|130||||
     df_routes_in_case = df_routes_flex.groupby(by=['AGENCY_NAME', 'ROUTE_NAME', 'EXT_ROUTE_ID']).agg('size').reset_index().drop(columns=0)
     df_routes_in_case['FIRST_VISIT_DATE'] = pd.to_datetime(DATE_OF_LOAD, format='%d.%m.%Y')
-    df_routes_in_case['FIRST_VISIT_DATE'] = df_routes_in_case['FIRST_VISIT_DATE'].astype('str')
     df_routes_in_case['REPEAT_DAYS']    = '7'
     df_routes_in_case['VISIT_NUMBER']   = '1'
     df_routes_in_case['VISIT_DURATION'] = '130' 
@@ -115,6 +117,7 @@ def add_empty_shipto(df_routes_flex, DATE_OF_LOAD):
     df_routes_in_case[['WEEKDAY_NUMBER', 'DAY_NAME', 'WEEK_NUMBER', 'WEEK_1234_ORDER', 'PHOTOS_TARGET', 'DOCUMENTS_TARGET', 'PHOTOAUDIT_TARGET', 'END_DATE']] = ''
     df_routes_in_case = df_routes_in_case[['SHIP_TO', 'ROUTE_NAME', 'FIRST_VISIT_DATE', 'WEEKDAY_NUMBER', 'DAY_NAME', 'WEEK_NUMBER', 'WEEK_1234_ORDER', 'EXT_ROUTE_ID',  'VISIT_NUMBER', 'AGENCY_NAME', 'VISIT_DURATION', 'ROUTE_TYPE',  'PHOTOS_TARGET', 'DOCUMENTS_TARGET', 'PHOTOAUDIT_TARGET', 'END_DATE',  'REPEAT_DAYS']]
     df_routes_flex = pd.concat([df_routes_in_case, df_routes_flex])
+    df_routes_in_case['FIRST_VISIT_DATE'] = df_routes_in_case['FIRST_VISIT_DATE'].astype('str')
     return df_routes_flex
 
 #df_rtm_keys = df_rtm_flex.pivot_table(index= ['SHIP_TO', 'ROUTE_NAME']).reset_index()

@@ -13,6 +13,7 @@ pd.options.mode.chained_assignment = None
 
 def fix_import_rtm_file(PATH):
     df_rtm = pd.read_excel(PATH, sheet_name='MergeDATA', usecols='A:AM')#, engine = 'pyxlsb')
+    df_rtm = df_rtm.replace(r'\n','', regex=True)
     return df_rtm
 
 
@@ -41,6 +42,7 @@ def fix_rename_columns(df_rtm):
     filt = df_rtm['ORDER_TYPE'] == 'FIX'  #FLEX     
     df_rtm = df_rtm[filt]
     df_rtm['SHIP_TO'] = df_rtm['SHIP_TO'].astype('float').astype('int').astype('str')
+    df_rtm['VISIT_DURATION'] = df_rtm['VISIT_DURATION'].astype('float').astype('int') 
     return df_rtm
 
 
@@ -90,7 +92,7 @@ def fix_converting_rtm_to_routes(df_rtm, df_calender):
     df_routes.dropna(subset=['VISIT_NUMBER'], inplace=True)
     df_routes.rename(columns={'DATE': 'FIRST_VISIT_DATE'}, inplace=True)                                                                                                                                                    
     df_routes.loc[ df_routes['VISIT_DURATION'] < 5, ['VISIT_DURATION']]= '5'
-    df_routes['VISIT_DURATION'] = df_routes['VISIT_DURATION'].astype('int').astype('str')   
+    df_routes['VISIT_DURATION'] = df_routes['VISIT_DURATION'].astype('float').astype('int').astype('str')   
     df_routes['VISIT_NUMBER'] = df_routes['VISIT_NUMBER'].astype('int').astype('str') 
     df_routes['EXT_ROUTE_ID'] = '0000' + df_routes['EXT_ROUTE_ID'].astype('str')
     df_routes['EXT_ROUTE_ID'] = df_routes['EXT_ROUTE_ID'].str[-4:]  
