@@ -6,11 +6,12 @@ from interface import *
 from fix_routes_converter  import *
 from flex_routes_converter import *
 from tl_routes_converter import *
+from HnN_routes_converter import *
 from routes_export import *
 from time import sleep
 
 
-def fix_rtm_convertor():
+def fix_rtm_convertor(): 
     PATH = input_path()
     if PATH != 'error':
         DATE_OF_LOAD = input_load_date()
@@ -45,12 +46,35 @@ def flex_rtm_convertor():
             export_new_routes_files(df_routes_flex, PATH, 'Гибкие_маршруты',df_employees, agency_name)        
         DATE_OF_LOAD, PATH = '',''
 
+def HnN_rtm_convertor():
+    show_HnN_routes_memo()
+    PATH = input_path()
+    if PATH != 'error':
+        DATE_OF_LOAD = input_load_date()
+        df_rtm  = HnN_import_rtm_file(PATH)        
+        df_rtm = HnN_rename_columns(df_rtm)  
+        df_rtm = HnN_filtering_rtm(df_rtm)     
+        df_rtm = check_wrong_order_type(df_rtm) 
+        df_rtm = check_wrong_route_type(df_rtm)
+        for agency_name in set_agency_list(df_rtm):
+            print_processed_agency(agency_name)           
+            df_rtm = HnN_unpivot_rtm(df_rtm)
+            df_calender = HnN_create_calender(DATE_OF_LOAD)
+            df_routes_HnN_fix = HnN_converting_FIX_rtm_to_routes(df_rtm, df_calender)
+            df_routes_HnN_flex = HnN_converting_FLEX_rtm_to_routes(df_rtm)
+            df_routes = HnN_union_FLEX_n_FIX_routes(df_routes_HnN_fix, df_routes_HnN_flex)
+            df_routes = add_empty_shipto_HnN(df_routes, DATE_OF_LOAD)
+            df_routes = route_type_substitution(df_routes)
+            df_routes = errors_correction(df_routes)
+            export_new_routes_files(df_routes, PATH, 'Маршруты HnN','', agency_name)        
+        DATE_OF_LOAD, PATH = '',''
+
 
 def tl_rtm_convertor():
     print_warning_teamlead()
     PATH = input_path()
     if PATH != 'error':
-        DATE_OF_LOAD = input_load_date()        
+        DATE_OF_LOAD = input_load_date()    
         df_rtm = tl_import_rtm_file(PATH)     
         df_rtm = tl_rename_columns(df_rtm)   
         for agency_name in set_agency_list(df_rtm):
@@ -87,6 +111,8 @@ elif convertor == '4':
     delete_routes_convertor()
 elif convertor == '5':
     tl_rtm_convertor()
+elif convertor == '6':
+    HnN_rtm_convertor()
 else:
     print ("Error")
 
@@ -105,6 +131,7 @@ sleep(120)
 #Установил туда пандас и эти пакеты
 #conda install  pillow
 #pip install openpyxl==3.0.9    # Это очень важно, без этого выдаёт ошибку при исподьзовании
+                                # Но в последнюю установку pandas потребовал версию 3.0.10. Я ее установил и все нормально запаковалось.
 ###pip install datetime
 #conda install pandas
 #conda install numpy

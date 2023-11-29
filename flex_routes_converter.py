@@ -69,7 +69,7 @@ def flex_unpivot_rtm(df_rtm):
     return df_rtm_flex
 
 def flex_create_calender(DATE_OF_LOAD):
-    df_calender = pd.DataFrame(pd.date_range('2023-01-01', '2023-12-31'), columns=['DATE'] )
+    df_calender = pd.DataFrame(pd.date_range('2023-11-27', '2024-12-31'), columns=['DATE'] )
     df_calender['WEEKDAY_NUMBER'] = df_calender['DATE'].dt.weekday+1
     df_calender['DAY_NAME'] = df_calender['WEEKDAY_NUMBER'] 
     df_calender['WEEK_NUMBER'] = df_calender['DATE'].dt.strftime("%W").astype('int')+ 1  #еще можно так .dt.isocalendar().week, но тут не стандартные номера недель

@@ -69,7 +69,7 @@ def fix_unpivot_rtm(df_rtm):
 
 #Формируем календарь на год вперед
 def fix_create_calender(DATE_OF_LOAD):
-    df_calender = pd.DataFrame(pd.date_range('2023-01-01', '2023-12-31'), columns=['DATE'] )
+    df_calender = pd.DataFrame(pd.date_range('2023-11-27', '2024-12-31'), columns=['DATE'] )
     df_calender['WEEKDAY_NUMBER'] = df_calender['DATE'].dt.weekday+1
     df_calender['DAY_NAME'] = df_calender['WEEKDAY_NUMBER'] 
     df_calender['WEEK_NUMBER'] = df_calender['DATE'].dt.strftime("%W").astype('int')+ 1  #еще можно так .dt.isocalendar().week, но тут не стандартные номера недель
@@ -83,7 +83,7 @@ def fix_create_calender(DATE_OF_LOAD):
     return df_calender
 
 
-def fix_converting_rtm_to_routes(df_rtm, df_calender):
+def fix_converting_rtm_to_routes(df_rtm, df_calender): 
     #df_rtm_keys = df_rtm.pivot_table(index= ['SHIP_TO', 'ROUTE_NAME']).reset_index()
     df_rtm_keys = df_rtm.groupby(by=['SHIP_TO', 'ROUTE_NAME']).agg('size').reset_index().drop(columns=0)
     df_rtm_keys = df_rtm_keys[['SHIP_TO', 'ROUTE_NAME']]
