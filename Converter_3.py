@@ -9,6 +9,8 @@ from tl_routes_converter import *
 from HnN_routes_converter import *
 from routes_export import *
 from time import sleep
+import warnings
+warnings.filterwarnings("ignore")
 
 
 def fix_rtm_convertor(): 
@@ -21,6 +23,7 @@ def fix_rtm_convertor():
         df_calender = fix_create_calender(DATE_OF_LOAD)
         df_routes = fix_converting_rtm_to_routes(df_rtm, df_calender)
         df_routes = add_empty_shipto(df_routes, DATE_OF_LOAD)
+        df_routes = zeroing_empty_routes(df_routes)
         export_new_routes_files(df_routes, PATH, 'Фиксированные_маршруты', '', )
         DATE_OF_LOAD, PATH = '',''
 
@@ -41,6 +44,7 @@ def flex_rtm_convertor():
             df_calender = flex_create_calender(DATE_OF_LOAD)
             df_routes_flex = flex_converting_rtm_to_routes(df_rtm_tmp, df_calender)
             df_routes_flex = add_empty_shipto(df_routes_flex, DATE_OF_LOAD)
+            #df_routes_flex = zeroing_empty_routes(df_routes_flex) - Не использовать
             show_new_routes(df_show_new_routes)
             #show_routs_wo_employee(df_employees) 
             export_new_routes_files(df_routes_flex, PATH, 'Гибкие_маршруты',df_employees, agency_name)        
@@ -59,15 +63,19 @@ def HnN_rtm_convertor():
         for agency_name in set_agency_list(df_rtm):
             print_processed_agency(agency_name)           
             df_rtm = HnN_unpivot_rtm(df_rtm)
+            df_vacants = create_HnN_vacants(df_rtm)
             df_calender = HnN_create_calender(DATE_OF_LOAD)
             df_routes_HnN_fix = HnN_converting_FIX_rtm_to_routes(df_rtm, df_calender)
             df_routes_HnN_flex = HnN_converting_FLEX_rtm_to_routes(df_rtm)
             df_routes = HnN_union_FLEX_n_FIX_routes(df_routes_HnN_fix, df_routes_HnN_flex)
             df_routes = add_empty_shipto_HnN(df_routes, DATE_OF_LOAD)
-            df_routes = route_type_substitution(df_routes)
-            df_routes = errors_correction(df_routes)
-            export_new_routes_files(df_routes, PATH, 'Маршруты HnN','', agency_name)        
+            #df_routes = zeroing_empty_routes(df_routes)  #- Не использовать
+            df_routes = route_type_substitution(df_routes)            
+            export_new_routes_files(df_routes, PATH, 'Маршруты HnN','', agency_name) 
+            export_setagent( df_vacants, PATH, 'Маршруты HnN', agency_name) 
+            export_setclassify( df_vacants, PATH, 'Маршруты HnN', agency_name)     
         DATE_OF_LOAD, PATH = '',''
+
 
 
 def tl_rtm_convertor():
@@ -82,6 +90,7 @@ def tl_rtm_convertor():
             df_rtm_tmp =  tl_filters_data(df_rtm, agency_name)
             df_routes_tmp = tl_converting_rtm_to_routes(df_rtm_tmp)
             df_routes_tmp = tl_add_empty_shipto(df_routes_tmp, DATE_OF_LOAD)
+            # df_routes_tmp = zeroing_empty_routes(df_routes_tmp)  - Не использовать
             export_new_routes_files(df_routes_tmp, PATH, 'Маршруты тимлидов', df_employees='', agency=agency_name)        
         DATE_OF_LOAD, PATH = '',''        
         

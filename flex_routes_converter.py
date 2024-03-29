@@ -56,7 +56,7 @@ def flex_unpivot_rtm(df_rtm):
     renames = {'variable'  :  'DAY_NAME', 
                'value'     :  'VISIT_NUMBER'} 
     df_rtm_flex.rename(columns=renames, inplace=True)
-    filt = df_rtm_flex['VISIT_NUMBER'].notnull()
+    filt = ((df_rtm_flex['VISIT_NUMBER'] == '1') + (df_rtm_flex['VISIT_NUMBER'] == 1))
     df_rtm_flex = df_rtm_flex[filt]
     df_rtm_flex['WEEK_1234_ORDER'] = df_rtm_flex['DAY_NAME'].str[-1]
     df_rtm_flex['WEEK_1234_ORDER'] = df_rtm_flex['WEEK_1234_ORDER'].astype('int')
@@ -102,11 +102,14 @@ def flex_converting_rtm_to_routes(df_rtm_flex, df_calender):
     df_routes_flex['END_DATE']  = ''
     df_routes_flex['REPEAT_DAYS']  = '0' #Гибкие маршруты теперь заливаем так же как и фиксированные, просто вместо цикличности указывать 0 (без цикла). 
     df_routes_flex['SHIP_TO'] = df_routes_flex['SHIP_TO'].astype('float').astype('int').astype('str')
-    return df_routes_flex
+    return df_routes_flex 
 
 
 def add_empty_shipto(df_routes_flex, DATE_OF_LOAD):
     #Danone|TestTerritory_3_Dub33|Dub33|Мерчандайзер||2023-05-08|7|1|130||||
+    # ПОМНИ! Все строки, имеющие периодичность отличную от нуля, будут трансформированы в конкретные даты. 
+    # При этом преобразование будет проводится в периоде от StartDate до EndDate. 
+    # Если в пакете EndDate не указана, то в качестве EndDate будет использовано 31 декабря текущего года.
     df_routes_in_case = df_routes_flex.groupby(by=['AGENCY_NAME', 'ROUTE_NAME', 'EXT_ROUTE_ID']).agg('size').reset_index().drop(columns=0)
     df_routes_in_case['FIRST_VISIT_DATE'] = pd.to_datetime(DATE_OF_LOAD, format='%d.%m.%Y')
     df_routes_in_case['REPEAT_DAYS']    = '7'
@@ -120,7 +123,7 @@ def add_empty_shipto(df_routes_flex, DATE_OF_LOAD):
     df_routes_in_case['FIRST_VISIT_DATE'] = df_routes_in_case['FIRST_VISIT_DATE'].astype('str')
     return df_routes_flex
 
-#df_rtm_keys = df_rtm_flex.pivot_table(index= ['SHIP_TO', 'ROUTE_NAME']).reset_index()
+#df_rtm_keys = df_rtm_flex.pivot_table(index= ['SHIP_TO', 'ROUTE_NAME']).reset_index() 
 
 
 #df = flex_rtm_convertor()

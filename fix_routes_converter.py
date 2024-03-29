@@ -59,7 +59,7 @@ def fix_unpivot_rtm(df_rtm):
     df_rtm['DAY_NAME']    = df_rtm['DAY_NAME'].str[0:2]
     df_rtm['DAY_NAME']    = df_rtm['DAY_NAME'].astype('str')
     df_rtm['EXT_ROUTE_ID'] = df_rtm['ROUTE_NAME'].str.split('_').str[-1].str.strip()
-    filt = df_rtm['VISIT_NUMBER'].notnull()
+    filt = ((df_rtm['VISIT_NUMBER'] == '1') + (df_rtm['VISIT_NUMBER'] == 1))
     df_rtm = df_rtm[filt]
     df_rtm['ROW_NUMBER'] = df_rtm.groupby(by=['ROUTE_NAME','DAY_NAME','WEEK_1234_ORDER' ]).cumcount()+1
     df_rtm.loc[df_rtm['VISIT_NUMBER'] == 1, ['VISIT_NUMBER']] = df_rtm['ROW_NUMBER']
@@ -107,6 +107,9 @@ def fix_converting_rtm_to_routes(df_rtm, df_calender):
 
 def add_empty_shipto(df_routes, DATE_OF_LOAD):
     #Danone|TestTerritory_3_Dub33|Dub33|Мерчандайзер||2023-05-08|7|1|130||||
+    # ПОМНИ! Все строки, имеющие периодичность отличную от нуля, будут трансформированы в конкретные даты. 
+    # При этом преобразование будет проводится в периоде от StartDate до EndDate. 
+    # Если в пакете EndDate не указана, то в качестве EndDate будет использовано 31 декабря текущего года.
     df_routes_in_case = df_routes.groupby(by=['AGENCY_NAME', 'ROUTE_NAME', 'EXT_ROUTE_ID']).agg('size').reset_index().drop(columns=0)
     df_routes_in_case['FIRST_VISIT_DATE'] = pd.to_datetime(DATE_OF_LOAD, format='%d.%m.%Y')
     df_routes_in_case['REPEAT_DAYS']    = '7'
@@ -119,6 +122,10 @@ def add_empty_shipto(df_routes, DATE_OF_LOAD):
     df_routes_flex = pd.concat([df_routes_in_case, df_routes])
     return df_routes
 
-
+def zeroing_empty_routes(df_routes):
+    '''Не использовать'''
+    df_routes = df_routes.loc[df_routes['VISIT_NUMBER'] != 0]
+    df_routes = df_routes.loc[df_routes['VISIT_NUMBER'] != '0']  
+    return df_routes
 
 

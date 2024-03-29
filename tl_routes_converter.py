@@ -27,7 +27,7 @@ def tl_rename_columns(df_rtm):
     df_rtm.rename(columns=renames, inplace=True)
     df_rtm['SHIP_TO'] = df_rtm['SHIP_TO'].astype('float').astype('int').astype('str')
     df_rtm['VISIT_DURATION'] = df_rtm['VISIT_DURATION'].astype('float').astype('int') 
-    return df_rtm
+    return df_rtm 
     
 
 def tl_filters_data(df_rtm, agency_name):    
@@ -42,15 +42,28 @@ def tl_filters_data(df_rtm, agency_name):
 
 
 def tl_converting_rtm_to_routes(df_rtm):
+    #df_zeroing = pd.DataFrame(df_rtm.loc[df_rtm['ПН1'] == '0'])
+    #df_zeroing = df_zeroing.groupby(by=['AGENCY_NAME', 'ROUTE_NAME', 'SHIP_TO']).agg('size').reset_index().drop(columns=0)
+    #df_zeroing['VISIT_NUMBER']   = '0'
+    df_rtm = pd.melt(df_rtm, id_vars=['ROUTE_TYPE','SHIP_TO','ROUTE_NAME','ROUTE_ID','FREQUENCY_RTM','AGENCY_NAME','VISIT_DURATION','ROLE','ORDER_TYPE','SCENARIO'])
+    renames = {'variable'  :  'DAY_NAME', 
+               'value'     :  'VISIT_NUMBER'} 
+    df_rtm.rename(columns=renames, inplace=True)
+    filt = ((df_rtm['VISIT_NUMBER'] == '1') + (df_rtm['VISIT_NUMBER'] == 1))
+    df_rtm = df_rtm[filt]
     df_rtm = df_rtm.groupby(by=['AGENCY_NAME', 'ROUTE_NAME', 'SHIP_TO']).agg('size').reset_index().drop(columns=0)
+    #df_rtm = pd.merge(df_rtm, df_zeroing, on=['AGENCY_NAME', 'ROUTE_NAME', 'SHIP_TO'], how='left' )
+    #df_rtm['VISIT_NUMBER'] = df_rtm['VISIT_NUMBER'].astype('str')
+    #df_rtm.loc[df_rtm['VISIT_NUMBER'] != '0', ['VISIT_NUMBER']] = '1'
+
     df_rtm['EXT_ROUTE_ID'] = df_rtm['ROUTE_NAME'].str.split('_').str[-1].str.strip()
     df_rtm['EXT_ROUTE_ID'] = '0000' + df_rtm['EXT_ROUTE_ID'].astype('str')
     df_rtm['EXT_ROUTE_ID'] = df_rtm['EXT_ROUTE_ID'].str[-4:]
     df_rtm['ROUTE_TYPE'] = 'Тим Лид' 
     df_rtm['FIRST_VISIT_DATE'] = '2024-12-30'
     df_rtm['REPEAT_DAYS']    = '0'
-    df_rtm['VISIT_NUMBER']   = '1'
     df_rtm['VISIT_DURATION'] = '100' 
+    df_rtm['VISIT_NUMBER'] = '1' 
     df_rtm['PHOTOS_TARGET'] = '5' 
     df_rtm['DOCUMENTS_TARGET'] = '5' 
     df_rtm['PHOTOAUDIT_TARGET'] = '1' 
@@ -62,6 +75,9 @@ def tl_converting_rtm_to_routes(df_rtm):
 
 def tl_add_empty_shipto(df_routes, DATE_OF_LOAD):
     #Danone|TestTerritory_3_Dub33|Dub33|Мерчандайзер||2023-05-08|7|1|130||||
+    # ПОМНИ! Все строки, имеющие периодичность отличную от нуля, будут трансформированы в конкретные даты. 
+    # При этом преобразование будет проводится в периоде от StartDate до EndDate. 
+    # Если в пакете EndDate не указана, то в качестве EndDate будет использовано 31 декабря текущего года.
     df_routes_in_case = df_routes.groupby(by=['AGENCY_NAME', 'ROUTE_NAME', 'EXT_ROUTE_ID']).agg('size').reset_index().drop(columns=0)
     df_routes_in_case['FIRST_VISIT_DATE'] = pd.to_datetime(DATE_OF_LOAD, format='%d.%m.%Y')
     df_routes_in_case['FIRST_VISIT_DATE'] = df_routes_in_case['FIRST_VISIT_DATE'].astype('str')
@@ -75,3 +91,4 @@ def tl_add_empty_shipto(df_routes, DATE_OF_LOAD):
     df_routes = pd.concat([df_routes_in_case, df_routes])
     df_routes_in_case['FIRST_VISIT_DATE'] = df_routes_in_case['FIRST_VISIT_DATE'].astype('str')
     return df_routes
+

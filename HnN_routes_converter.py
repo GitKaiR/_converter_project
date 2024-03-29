@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import os.path 
 import csv
 from interface import input_path, input_load_date
@@ -78,12 +79,21 @@ def check_wrong_route_type(df_rtm):
     return df_rtm
 
 
+def create_HnN_vacants(df_rtm):
+    df_vacants = df_rtm.groupby(by=['ROUTE_NAME', 'EXT_ROUTE_ID', 'AGENCY_NAME']).agg('size').reset_index().drop(columns=0)
+    df_vacants.query("ROUTE_NAME.str.contains('VIRT_')", inplace=True)
+    df_vacants[['EMPLOYEE_ID', 'EMPLOYEE_NAME', 'EMPLOYEE_INNER_ID']] = np.NaN
+    df_vacants['EMPLOYEE_ID'].fillna('VIRT_VACANT_' +  df_vacants['EXT_ROUTE_ID'], inplace=True)
+    df_vacants['EMPLOYEE_NAME'].fillna('VIRT_VACANT_' +  df_vacants['EXT_ROUTE_ID'], inplace=True)
+    return df_vacants
+
+
 def HnN_unpivot_rtm(df_rtm):
     df_rtm_tss = pd.melt(df_rtm, id_vars=['ROUTE_TYPE','SHIP_TO','ROUTE_NAME','ROUTE_ID','FREQUENCY_RTM','AGENCY_NAME','VISIT_DURATION','ROLE','ORDER_TYPE','SCENARIO'])
     renames = {'variable'  :  'DAY_NAME', 
                'value'     :  'VISIT_NUMBER'} 
     df_rtm_tss.rename(columns=renames, inplace=True)
-    filt = df_rtm_tss['VISIT_NUMBER'].notnull()
+    filt = ((df_rtm_tss['VISIT_NUMBER'] == '1') + (df_rtm_tss['VISIT_NUMBER'] == 1))
     df_rtm_tss = df_rtm_tss[filt]
     df_rtm_tss['WEEK_1234_ORDER'] = df_rtm_tss['DAY_NAME'].str[-1]
     df_rtm_tss['WEEK_1234_ORDER'] = df_rtm_tss['WEEK_1234_ORDER'].astype('int')
@@ -144,13 +154,13 @@ def HnN_converting_FIX_rtm_to_routes(df_rtm, df_calender):
 
 def HnN_converting_FLEX_rtm_to_routes(df_rtm):
     df_rtm = pd.DataFrame(df_rtm.query("ORDER_TYPE == 'FLEX'"))     #ROUTE_TYPE in ('TSS') &
-    df_rtm = df_rtm.groupby(by=['AGENCY_NAME', 'ROUTE_NAME', 'ROUTE_TYPE', 'SHIP_TO']).agg('size').reset_index().drop(columns=0)
+    df_rtm = df_rtm.groupby(by=['AGENCY_NAME', 'ROUTE_NAME', 'ROUTE_TYPE', 'SHIP_TO']).agg({'VISIT_NUMBER': 'mean'}).reset_index()#.drop(columns=0)
     df_rtm['EXT_ROUTE_ID'] = df_rtm['ROUTE_NAME'].str.split('_').str[-1].str.strip()
     df_rtm['EXT_ROUTE_ID'] = '0000' + df_rtm['EXT_ROUTE_ID'].astype('str')
     df_rtm['EXT_ROUTE_ID'] = df_rtm['EXT_ROUTE_ID'].str[-4:]
     df_rtm['FIRST_VISIT_DATE'] = '2024-12-30'
     df_rtm['REPEAT_DAYS']    = '0'
-    df_rtm['VISIT_NUMBER']   = '1'
+    #df_rtm['VISIT_NUMBER']   = '1'
     df_rtm['VISIT_DURATION'] = '100' 
     df_rtm['PHOTOS_TARGET'] = '5' 
     df_rtm['DOCUMENTS_TARGET'] = '5' 

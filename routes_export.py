@@ -42,13 +42,25 @@ def export_setagent( df_employees, path, folder, agency=''):
 
 def export_setclassify( df_employees, path, folder, agency=''):
     '''Связка кода сотрудника Вакант с кодом маршрута через файл DMT_Set_ClassifyEx.txt'''
-    df_employees['EXT_ROUTE_ID'] =  df_employees['ROUTE_NAME'].str.split('_').str[-1].str.strip()
-    df_employees['EXT_ROUTE_ID'] = '0000' + df_employees['EXT_ROUTE_ID'].astype('str')
-    df_employees['EXT_ROUTE_ID'] =  df_employees['EXT_ROUTE_ID'].str[-4:] 
+    if 'EXT_ROUTE_ID' not in df_employees.columns:
+        df_employees['EXT_ROUTE_ID'] =  df_employees['ROUTE_NAME'].str.split('_').str[-1].str.strip()
+        df_employees['EXT_ROUTE_ID'] = '0000' + df_employees['EXT_ROUTE_ID'].astype('str')
+        df_employees['EXT_ROUTE_ID'] =  df_employees['EXT_ROUTE_ID'].str[-4:] 
 
-    df_employees = pd.DataFrame(df_employees.groupby(by=['EXT_ROUTE_ID', 'EMPLOYEE_ID', 'EMPLOYEE_NAME']).agg('size')).reset_index()
+    # Опеределяем роль для маршрута
+    df_employees['ROUTE_PREFIX'] = df_employees['ROUTE_NAME'].str.split('_').str[0].str.strip()
+    df_employees.loc[df_employees['ROUTE_PREFIX'] == 'ASM', 'ROLE_ID'] = '15'
+    df_employees.loc[df_employees['ROUTE_PREFIX'] == 'SV', 'ROLE_ID'] = '15'
+    df_employees.loc[df_employees['ROUTE_PREFIX'] == 'TL', 'ROLE_ID'] = '15'
+    df_employees['ROLE_ID'].fillna('16', inplace=True)
+
+    # Создаем вакантов
+    #df_employees['EMPLOYEE_ID'].fillna(df_employees['ROUTE_PREFIX'] + '_VACANT_' +  df_employees['EXT_ROUTE_ID'], inplace=True)
+    #df_employees['EMPLOYEE_NAME'].fillna(df_employees['ROUTE_PREFIX'] + '_VACANT_' +  df_employees['EXT_ROUTE_ID'], inplace=True)
+    
+    df_employees = pd.DataFrame(df_employees.groupby(by=['ROLE_ID', 'EXT_ROUTE_ID', 'EMPLOYEE_ID', 'EMPLOYEE_NAME']).agg('size')).reset_index()
     #df_empty_employees = pd.DataFrame(df_employees_export[df_employees_export['EMPLOYEE_ID'] == '0'])
-    df_employees[1] = '16'
+    df_employees[1] = df_employees['ROLE_ID']
     df_employees[2] = '0:0:"' + df_employees['EXT_ROUTE_ID'] +'";1:1:"' + df_employees['EMPLOYEE_ID'] + '"'
     df_employees[3] = '1#1'
     df_employees = df_employees[[1,2,3]]
@@ -178,7 +190,7 @@ def fix_export_route_file(df_routes, path):
 
 
 
-def export_setclientservice(df_routes, path, folder, agency=''):
+def export_setclientservice(df_routes, path, folder, agency=''): 
     '''Экспорт единого файла фиксированных и гибких маршрутов в новом формате (ПОСЛЕ доработки по историчности) через файл DMT_User273_SetClientServiceMatrix_Batch.txt'''
     renames = { 'AGENCY_NAME'        : 'OwnerExid',                 # 1 --- Принадлежность записи к агентству
                 'ROUTE_NAME'         : 'TerrName',                  # 2 --- Наименование маршрута"
